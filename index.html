@@ -4,50 +4,612 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Bookmarks Explorer</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+@import url('https://fonts.googleapis.com/css2?family=Gochi+Hand&display=swap');
+
+:root {
+    --bg-color: #ffffff;
+    --text-color: #444;
+    --folder-color: #ffeaa7; /* Cute yellow */
+    --link-color: #74b9ff; /* Pop blue */
+    --border-color: #2d3436;
+    --hover-bg: #f0f0f0;
+    --accent-pop: #fd79a8; /* Pink */
+}
+
+body {
+    font-family: 'Gochi Hand', cursive;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+    height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow: hidden;
+}
+
+/* Common Box Style */
+.hand-drawn-box {
+    border: 2px solid var(--border-color);
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    box-shadow: 2px 3px 0px var(--border-color);
+    background: #fff;
+    padding: 10px 20px;
+}
+
+/* Header */
+header {
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Breadcrumb Bar */
+.breadcrumb-bar {
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    gap: 5px;
+}
+
+.breadcrumb-item {
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 5px;
+    transition: background-color 0.1s, color 0.1s;
+}
+
+.breadcrumb-item:hover {
+    background-color: var(--folder-color);
+    color: var(--border-color);
+}
+
+.breadcrumb-separator {
+    color: #888;
+}
+
+.back-btn {
+    background: transparent;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    transition: background-color 0.1s, transform 0.1s;
+}
+
+.back-btn:hover {
+    background-color: var(--folder-color);
+    transform: scale(1.1);
+}
+
+.back-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.back-btn:disabled:hover {
+    background-color: transparent;
+    transform: none;
+}
+
+/* Control Panel */
+.control-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 15px 20px;
+}
+
+.input-group {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px 15px;
+    flex: 1;
+}
+
+.input-row {
+    display: contents;
+}
+
+.input-label {
+    font-weight: bold;
+    align-self: center;
+}
+
+.hand-input {
+    border: 2px solid var(--border-color);
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    padding: 5px 10px;
+    font-family: inherit;
+    font-size: 1.1rem;
+    outline: none;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+}
+
+.hand-btn {
+    background: transparent;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 0;
+    transition: transform 0.1s, background-color 0.1s, color 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hand-btn:hover {
+    background-color: var(--folder-color);
+    transform: scale(1.1);
+}
+
+.hand-btn.delete:hover {
+    background-color: #fab1a0;
+    color: #d63031;
+}
+
+/* Main Layout */
+.explorer-container {
+    display: flex;
+    flex: 1;
+    gap: 20px;
+    overflow: hidden; /* Contains the scroll areas */
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    overflow-y: auto;
+    background: #fffdf0;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-title {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    border-bottom: 2px dashed var(--border-color);
+    padding-bottom: 5px;
+}
+
+.sidebar-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-item {
+    padding: 8px;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.sidebar-item:hover {
+    transform: translateX(5px);
+    color: var(--link-color);
+}
+
+/* Main View */
+.main-view {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0; /* Box style handles padding */
+}
+
+.file-grid {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.file-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.1rem;
+}
+
+.file-table th {
+    text-align: left;
+    padding: 10px;
+    border-bottom: 2px dashed var(--border-color);
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 10;
+}
+
+.open-btn {
+    background: #fff;
+    border: 2px solid var(--border-color);
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 3px 15px;
+    transition: transform 0.1s, background-color 0.1s;
+}
+
+.open-btn:hover {
+    background-color: var(--link-color);
+    color: #fff;
+    transform: scale(1.05) rotate(-1deg);
+}
+
+.file-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.file-table tbody tr {
+    cursor: pointer;
+}
+
+.file-table tbody tr:hover {
+    background-color: var(--hover-bg);
+}
+
+.file-table tbody tr.selected {
+    background-color: var(--folder-color);
+}
+
+.col-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+}
+
+.item-icon {
+    font-size: 1.5rem;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 10px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+    border: 2px solid #fff;
+}
+    </style>
 </head>
 <body>
-    <header>
-        <div class="logo">
-            My Bookmarks
-        </div>
-        <!-- Search placeholder -->
-        <div style="font-size: 1rem; border: 2px solid #2d3436; padding: 5px 15px; border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;">
-            Search...
-        </div>
+    <!-- 1. Header -->
+    <header class="hand-drawn-box">
+        My Bookmarks
     </header>
 
-    <div class="explorer-container">
-        <!-- Sidebar Tree View (Static for visual prototype, logic handles main view) -->
-        <aside class="sidebar">
-            <div style="margin-bottom: 10px;"><strong>Quick Access</strong></div>
-            <ul style="list-style: none; padding-left: 10px;">
-                <li style="margin-bottom: 5px;">📁 Desktop</li>
-                <li style="margin-bottom: 5px;">📁 Downloads</li>
-                <li style="margin-bottom: 5px;">📁 Documents</li>
-                <li style="margin-bottom: 5px; color: var(--accent-pop);">❤ Favorites</li>
-            </ul>
-            <div style="margin-top: 20px; border-top: 2px dashed #ccc; padding-top: 10px;">
-                <strong>Drives</strong>
-                <ul style="list-style: none; padding-left: 10px;">
-                    <li>💾 Local Disk (C:)</li>
-                </ul>
+    <!-- 2. Breadcrumb -->
+    <div class="hand-drawn-box breadcrumb-bar">
+        <button class="back-btn" id="back-btn" onclick="goBack()" title="Go back">←</button>
+        <div id="breadcrumb"></div>
+    </div>
+
+    <!-- 3. Control Panel -->
+    <div class="hand-drawn-box control-panel">
+        <div class="input-group">
+            <div class="input-row">
+                <div class="input-label">Directory</div>
+                <input type="text" id="input-directory" class="hand-input" placeholder="ROOT / Directory /" value="root /">
             </div>
+            <div class="input-row">
+                <div class="input-label">Name</div>
+                <input type="text" id="input-name" class="hand-input" placeholder="e.g. Spotify">
+            </div>
+            <div class="input-row">
+                <div class="input-label">URL</div>
+                <input type="text" id="input-url" class="hand-input" placeholder="https://...">
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button onclick="addNewItem()" class="hand-btn">add</button>
+            <button onclick="deleteSelected()" class="hand-btn delete">delete</button>
+        </div>
+    </div>
+
+    <!-- 4. Main Layout (Sidebar + Grid) -->
+    <div class="explorer-container">
+        <aside class="hand-drawn-box sidebar">
+            <div class="sidebar-title">Quick Access</div>
+            <ul class="sidebar-list">
+                <li class="sidebar-item">sampleA</li>
+                <li class="sidebar-item">sampleB</li>
+                <li class="sidebar-item">sampleC</li>
+            </ul>
         </aside>
 
-        <!-- Main Content Area -->
-        <main class="main-view">
-            <div class="address-bar">
-                <button id="back-btn" class="nav-btn">←</button>
-                <div id="breadcrumb" class="breadcrumb">Root</div>
-            </div>
-
+        <main class="hand-drawn-box main-view">
             <div id="file-grid" class="file-grid">
                 <!-- Javascript will populate this -->
             </div>
         </main>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+// Mock Data Structure
+const fileSystem = {
+    id: 'root',
+    name: 'Root',
+    type: 'folder',
+    children: [
+        {
+            id: '1',
+            name: 'Daily Work',
+            type: 'folder',
+            children: [
+                { id: '11', name: 'Gmail', type: 'link', url: 'https://gmail.com' },
+                { id: '12', name: 'Calendar', type: 'link', url: 'https://calendar.google.com' },
+                { id: '13', name: 'Slack', type: 'link', url: 'https://slack.com' }
+            ]
+        },
+        {
+            id: '2',
+            name: 'Dev Resources',
+            type: 'folder',
+            children: [
+                { id: '21', name: 'GitHub', type: 'link', url: 'https://github.com' },
+                { id: '22', name: 'StackOverflow', type: 'link', url: 'https://stackoverflow.com' },
+                {
+                    id: '24',
+                    name: 'Design Tools',
+                    type: 'folder',
+                    children: [
+                        { id: '241', name: 'Figma', type: 'link', url: 'https://figma.com' },
+                        { id: '242', name: 'Coolors', type: 'link', url: 'https://coolors.co' }
+                    ]
+                }
+            ]
+        },
+        { id: '3', name: 'News', type: 'link', url: 'https://news.ycombinator.com' },
+        { id: '4', name: 'Music', type: 'link', url: 'https://spotify.com' },
+        {
+            id: '5',
+            name: 'Shopping',
+            type: 'folder',
+            children: [
+                 { id: '51', name: 'Amazon', type: 'link', url: 'https://amazon.com' }
+            ]
+        }
+    ]
+};
+
+// State
+let currentPath = [fileSystem];
+let currentFolder = fileSystem;
+let selectedItem = null;
+
+// DOM Elements
+const breadcrumbEl = document.getElementById('breadcrumb');
+const backBtn = document.getElementById('back-btn');
+const fileGridEl = document.getElementById('file-grid');
+const inputDirectory = document.getElementById('input-directory');
+const inputName = document.getElementById('input-name');
+const inputUrl = document.getElementById('input-url');
+
+// Icons
+const ICONS = {
+    folder: '📁',
+    link: '🔗'
+};
+
+function render() {
+    // 1. Update Breadcrumb (clickable)
+    breadcrumbEl.innerHTML = '';
+    currentPath.forEach((folder, index) => {
+        const span = document.createElement('span');
+        span.className = 'breadcrumb-item';
+        span.textContent = folder.name;
+        span.onclick = () => navigateToPathIndex(index);
+        breadcrumbEl.appendChild(span);
+
+        // Add separator
+        const sep = document.createElement('span');
+        sep.className = 'breadcrumb-separator';
+        sep.textContent = ' / ';
+        breadcrumbEl.appendChild(sep);
+    });
+
+    // 2. Update Back Button state
+    backBtn.disabled = currentPath.length <= 1;
+
+    // 3. Update Directory Input
+    inputDirectory.value = currentPath.map(f => f.name).join(' / ') + ' /';
+
+    // 4. Render Grid
+    fileGridEl.innerHTML = '';
+
+    const table = document.createElement('table');
+    table.className = 'file-table';
+
+    // Header
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+        <tr>
+            <th>Name</th>
+            <th>URL</th>
+            <th style="width: 80px;"></th>
+        </tr>
+    `;
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+
+    if (currentFolder.children && currentFolder.children.length > 0) {
+        // Sort: Folders first, then Name
+        const sortedChildren = [...currentFolder.children].sort((a, b) => {
+            if (a.type !== b.type) {
+                return a.type === 'folder' ? -1 : 1;
+            }
+            return a.name.localeCompare(b.name);
+        });
+
+        sortedChildren.forEach(item => {
+            const tr = document.createElement('tr');
+            if (selectedItem && selectedItem.id === item.id) {
+                tr.className = 'selected';
+            }
+            tr.onclick = () => fillControlPanel(item);
+
+            // Name
+            const tdName = document.createElement('td');
+            const nameContainer = document.createElement('div');
+            nameContainer.className = 'col-name';
+            nameContainer.innerHTML = `<span>${item.name}</span>`;
+            tdName.appendChild(nameContainer);
+
+            // URL
+            const tdUrl = document.createElement('td');
+            tdUrl.style.fontFamily = 'monospace';
+            tdUrl.style.color = '#888';
+            tdUrl.textContent = item.url || '-';
+
+            // Open Button
+            const tdAction = document.createElement('td');
+            const openBtn = document.createElement('button');
+            openBtn.className = 'open-btn';
+            openBtn.textContent = 'OPEN';
+            openBtn.onclick = (e) => {
+                e.stopPropagation();
+                handleItemClick(item);
+            };
+            tdAction.appendChild(openBtn);
+
+            tr.appendChild(tdName);
+            tr.appendChild(tdUrl);
+            tr.appendChild(tdAction);
+            tbody.appendChild(tr);
+        });
+    } else {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="3" style="text-align:center; padding: 20px; color: #aaa;">Empty</td>';
+        tbody.appendChild(tr);
+    }
+
+    table.appendChild(tbody);
+    fileGridEl.appendChild(table);
+}
+
+function handleItemClick(item) {
+    if (item.type === 'folder') {
+        currentFolder = item;
+        currentPath.push(item);
+        selectedItem = null;
+        inputName.value = '';
+        inputUrl.value = '';
+        render();
+    } else if (item.type === 'link') {
+        window.open(item.url, '_blank');
+    }
+}
+
+function fillControlPanel(item) {
+    selectedItem = item;
+    inputName.value = item.name;
+    inputUrl.value = item.url || '';
+    render();
+}
+
+function goBack() {
+    if (currentPath.length > 1) {
+        currentPath.pop();
+        currentFolder = currentPath[currentPath.length - 1];
+        selectedItem = null;
+        inputName.value = '';
+        inputUrl.value = '';
+        render();
+    }
+}
+
+function navigateToPathIndex(index) {
+    if (index < currentPath.length - 1) {
+        currentPath = currentPath.slice(0, index + 1);
+        currentFolder = currentPath[currentPath.length - 1];
+        selectedItem = null;
+        inputName.value = '';
+        inputUrl.value = '';
+        render();
+    }
+}
+
+function addNewItem() {
+    const name = inputName.value.trim();
+    const url = inputUrl.value.trim();
+
+    if (!name) {
+        alert("Please enter a name.");
+        return;
+    }
+
+    // Determine type based on URL presence
+    const type = url ? 'link' : 'folder';
+    
+    const newItem = {
+        id: Date.now().toString(),
+        name: name,
+        type: type,
+        url: url || null,
+        children: type === 'folder' ? [] : undefined
+    };
+
+    if (!currentFolder.children) {
+        currentFolder.children = [];
+    }
+    
+    currentFolder.children.push(newItem);
+    
+    // Clear inputs
+    inputName.value = '';
+    inputUrl.value = '';
+    
+    render();
+}
+
+function deleteSelected() {
+    if (!selectedItem) {
+        alert("No item selected.");
+        return;
+    }
+
+    if (confirm(`Are you sure you want to delete "${selectedItem.name}"?`)) {
+        currentFolder.children = currentFolder.children.filter(item => item.id !== selectedItem.id);
+        selectedItem = null;
+        inputName.value = '';
+        inputUrl.value = '';
+        render();
+    }
+}
+
+// Initial Render
+render();
+    </script>
 </body>
 </html>
